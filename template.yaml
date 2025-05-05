@@ -6,7 +6,7 @@ Parameters:
   FunctionToDeploy:
     Type: String
     Default: All
-    Description: Name of the Lambda function to deploy (lambda_test, pdf-to-s3, shorten_url)
+    Description: Name of the Lambda function to deploy (lambda-test, pdf-to-s3, shorten_url)
 
   SharedSecretArn:
     Type: String
@@ -14,7 +14,7 @@ Parameters:
     Description: Shared secret ARN used across Lambda functions
 
 Conditions:
-  DeployLambda1: !Or [ !Equals [ !Ref FunctionToDeploy, "lambda_test" ], !Equals [ !Ref FunctionToDeploy, "All" ] ]
+  DeployLambda1: !Or [ !Equals [ !Ref FunctionToDeploy, "lambda-test" ], !Equals [ !Ref FunctionToDeploy, "All" ] ]
 
 Globals:
   Function:
@@ -27,8 +27,8 @@ Resources:
     Condition: DeployLambda1
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: lambda_test
-      CodeUri: lambda_test/src/
+      FunctionName: lambda-test
+      CodeUri: lambda-test/src/
       Handler: index.handler
       Runtime: nodejs18.x
       Layers:
