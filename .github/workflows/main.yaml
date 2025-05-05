@@ -1,0 +1,52 @@
+name: Deploy SAM Function
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: true
+      function:
+        description: 'Name of the Lambda function to deploy (e.g., lambda1, pdf-to-s3)'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code from selected branch
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install SAM CLI
+        run: pip install aws-sam-cli
+
+      - name: SAM Build Specific Function
+        run: |
+          sam build ${{ github.event.inputs.function }}
+
+      - name: SAM Deploy Specific Function
+        run: |
+          sam deploy \
+            --stack-name sam-${{ github.event.inputs.function }} \
+            --region ${{ secrets.AWS_REGION }} \
+            --s3-bucket ${{ secrets.SAM_DEPLOY_BUCKET }} \
+            --capabilities CAPABILITY_IAM \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides FunctionToDeploy=${{ github.event.inputs.function }}
+

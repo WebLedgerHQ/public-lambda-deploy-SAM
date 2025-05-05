@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Deploy multiple Lambda functions with shared Secret and conditional deploy
+
+Parameters:
+  FunctionToDeploy:
+    Type: String
+    Default: All
+    Description: Name of the Lambda function to deploy (lambda_test, pdf-to-s3, shorten_url)
+
+  SharedSecretArn:
+    Type: String
+    Default: arn:aws:secretsmanager:ap-south-1:546149929942:secret:lambda/common/env/secret
+    Description: Shared secret ARN used across Lambda functions
+
+Conditions:
+  DeployLambda1: !Or [ !Equals [ !Ref FunctionToDeploy, "lambda_test" ], !Equals [ !Ref FunctionToDeploy, "All" ] ]
+
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 128
+
+Resources:
+
+  Lambda1Function:
+    Condition: DeployLambda1
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: lambda_test
+      CodeUri: lambda_test/src/
+      Handler: index.handler
+      Runtime: nodejs18.x
+      Layers:
+        - arn:aws:lambda:ap-south-1:546149929942:layer:SecretManagerModule:2
+        - arn:aws:lambda:ap-south-1:546149929942:layer:shorten_url_node_modules:5
+      Policies:
+        - Statement:
+            Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource: !Ref SharedSecretArn
+
+
